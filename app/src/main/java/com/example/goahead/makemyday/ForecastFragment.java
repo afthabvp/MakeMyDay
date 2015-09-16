@@ -1,8 +1,10 @@
 package com.example.goahead.makemyday;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
 import android.text.format.Time;
 import android.util.Log;
@@ -14,9 +16,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
-import android.widget.ListAdapter;
 import android.widget.ListView;
-import android.widget.Toast;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -63,22 +63,34 @@ public class ForecastFragment extends Fragment {
 
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_refresh) {
-            FetchWeatherTask fetchWeatherTask=new FetchWeatherTask();
-            fetchWeatherTask.execute("600096");
+            updateWeather();
+
             return true;
         }
 
         return super.onOptionsItemSelected(item);
     }
 
+    private void updateWeather() {
+        FetchWeatherTask fetchWeatherTask=new FetchWeatherTask();
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
+        String location = prefs.getString(getString(R.string.pref_locaton_key),getString(R.string.pref_location_default));
+        fetchWeatherTask.execute(location);
 
+    }
+
+    @Override
+    public void onStart(){
+        super.onStart();
+        updateWeather();
+    }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_main, container, false);
 
-           String[] forecastArray = {
+         /*  String[] forecastArray = {
                     "Today - Sunny - 88/63",
                     "Tomarrow - Foggy - 70/40",
                     "weds - Cloudy - 72/63",
@@ -93,12 +105,14 @@ public class ForecastFragment extends Fragment {
 
 
 
+*/
 
             mForecastAdapter = new ArrayAdapter<String>(
                     getActivity(),
                     R.layout.list_item_forecast,
                     R.id.list_item_forecast_textview,
-                    weekForecast
+                   new ArrayList<String>()
+                   // weekForecast
             );
 
             ListView listView=(ListView) rootView.findViewById(R.id.listview_forecast);
@@ -108,7 +122,7 @@ public class ForecastFragment extends Fragment {
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 String forecastStr=mForecastAdapter.getItem(position);
                // Toast.makeText(getActivity(),forecastStr,Toast.LENGTH_SHORT).show(); //   Toast mainly to pop up the  click string
-                Intent intent = new Intent(new Intent(getActivity(),DeatailActivity.class)).
+                Intent intent = new Intent(new Intent(getActivity(),DetailActivity.class)).
                         putExtra(Intent.EXTRA_TEXT,forecastStr);
                 startActivity(intent);
             }

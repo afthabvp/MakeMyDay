@@ -2,6 +2,7 @@ package com.example.goahead.makemyday;
 
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
@@ -33,11 +34,15 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import android.content.SharedPreferences;
+import android.net.Uri;
+import android.preference.PreferenceManager;
 
 /**
  * Created by spartan300 on 15/9/15.
  */
 public class ForecastFragment extends Fragment {
+
     private ArrayAdapter<String> mForecastAdapter;
     public ForecastFragment() {
     }
@@ -70,6 +75,7 @@ public class ForecastFragment extends Fragment {
 
         return super.onOptionsItemSelected(item);
     }
+
 
     private void updateWeather() {
         FetchWeatherTask fetchWeatherTask=new FetchWeatherTask();

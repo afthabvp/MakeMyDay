@@ -1,5 +1,6 @@
 package com.example.goahead.makemyday;
 
+import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
@@ -106,7 +107,10 @@ public class ForecastFragment extends Fragment {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 String forecastStr=mForecastAdapter.getItem(position);
-                Toast.makeText(getActivity(),forecastStr,Toast.LENGTH_SHORT).show();
+               // Toast.makeText(getActivity(),forecastStr,Toast.LENGTH_SHORT).show(); //   Toast mainly to pop up the  click string
+                Intent intent = new Intent(new Intent(getActivity(),DeatailActivity.class)).
+                        putExtra(Intent.EXTRA_TEXT,forecastStr);
+                startActivity(intent);
             }
         });
 

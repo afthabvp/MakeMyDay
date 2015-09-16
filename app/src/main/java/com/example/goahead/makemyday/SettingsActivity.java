@@ -106,6 +106,7 @@ public class SettingsActivity extends Activity {
             // updated to reflect the new value, per the Android Design
             // guidelines.
             bindPreferenceSummaryToValue(findPreference(getString(R.string.pref_locaton_key)));
+            bindPreferenceSummaryToValue(findPreference(getString(R.string.pref_units_key)));
         }
     }
 

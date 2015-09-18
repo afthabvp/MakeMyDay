@@ -59,8 +59,28 @@ public class TestDb extends AndroidTestCase {
                 null, // columns to filter by row groups
                 null // sort order
         );
-        assertTrue(cursor.moveToFirst());
+
         TestUtilities.validateCursor(cursor, testValues);
+
+        // Fantastic.  Now that we have a location, add some weather!
+        ContentValues weatherValues =TestUtilities.createWeatherValues(locationRowId);
+
+        long weatherRowId = db.insert(WeatherContract.WeatherEntry.TABLE_NAME, null, weatherValues);
+        assertTrue(weatherRowId != -1);
+
+        // A cursor is your primary interface to the query results.
+        Cursor weatherCursor = db.query(
+                WeatherContract.WeatherEntry.TABLE_NAME,  // Table to Query
+                null, // leaving "columns" null just returns all the columns.
+                null, // cols for "where" clause
+                null, // values for "where" clause
+                null, // columns to group by
+                null, // columns to filter by row groups
+                null  // sort order
+        );
+
+        TestUtilities.validateCursor(weatherCursor, weatherValues);
+
 
         cursor.close();
         dbHelper.close();

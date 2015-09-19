@@ -60,8 +60,6 @@ public class WeatherContract {
         }
 
 
-
-
     }
 
 
@@ -142,6 +140,7 @@ public class WeatherContract {
         public static String getLocationSettingFromUri(Uri uri) {
             return uri.getPathSegments().get(1);
         }
+
         public static String getDateFromUri(Uri uri) {
             return uri.getPathSegments().get(2);
         }

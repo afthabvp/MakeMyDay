@@ -1,6 +1,12 @@
 package com.example.goahead.makemyday.data;
 
+import android.content.ContentResolver;
+import android.content.ContentUris;
+import android.net.Uri;
 import android.provider.BaseColumns;
+
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 /**
  * Created by spartan300 on 18/9/15.
@@ -8,7 +14,28 @@ import android.provider.BaseColumns;
 public class WeatherContract {
 
 
+    public static final String CONTENT_AUTHORITY = "com.example.goahead.makemyday";
+
+    public static final Uri BASE_CONTENT_URI = Uri.parse("content://" + CONTENT_AUTHORITY);
+
+
+
+    public static final String PATH_WEATHER = "weather";
+    public static final String PATH_LOCATION = "location";
+
+    public static final String DATE_FORMAT = "yyyyMMdd";
+
+
     public static final class LocationEntry implements BaseColumns {
+
+        public static final Uri CONTENT_URI =
+                BASE_CONTENT_URI.buildUpon().appendPath(PATH_LOCATION).build();
+
+
+        public static final String CONTENT_TYPE =
+                ContentResolver.CURSOR_DIR_BASE_TYPE + "/" + CONTENT_AUTHORITY + "/" + PATH_LOCATION;
+        public static final String CONTENT_ITEM_TYPE =
+                ContentResolver.CURSOR_ITEM_BASE_TYPE + "/" + CONTENT_AUTHORITY + "/" + PATH_LOCATION;
 
 
         // Table name
@@ -28,10 +55,40 @@ public class WeatherContract {
         public static final String COLUMN_COORD_LONG = "coord_long";
 
 
+        public static Uri buildLocationUri(long id) {
+            return ContentUris.withAppendedId(CONTENT_URI, id);
+        }
+
+
 
 
     }
+
+
+    /**
+     * Converts Date class to a string representation, used for easy comparison and database lookup.
+     * @param date The input date
+     * @return a DB-friendly representation of the date, using the format defined in DATE_FORMAT.
+     */
+    public static String getDbDateString(Date date){
+        // Because the API returns a unix timestamp (measured in seconds),
+        // it must be converted to milliseconds in order to be converted to valid date.
+        SimpleDateFormat sdf = new SimpleDateFormat(DATE_FORMAT);
+        return sdf.format(date);
+    }
+
+
     public static final class WeatherEntry implements BaseColumns {
+
+        public static final Uri CONTENT_URI =
+                BASE_CONTENT_URI.buildUpon().appendPath(PATH_WEATHER).build();
+
+
+
+        public static final String CONTENT_TYPE =
+                ContentResolver.CURSOR_DIR_BASE_TYPE + "/" + CONTENT_AUTHORITY + "/" + PATH_WEATHER;
+        public static final String CONTENT_ITEM_TYPE =
+                ContentResolver.CURSOR_ITEM_BASE_TYPE + "/" + CONTENT_AUTHORITY + "/" + PATH_WEATHER;
 
 
         public static final String TABLE_NAME = "weather";
@@ -64,6 +121,34 @@ public class WeatherContract {
         public static final String COLUMN_DEGREES = "degrees";
 
 
+        public static Uri buildWeatherUri(long id) {
+            return ContentUris.withAppendedId(CONTENT_URI, id);
+        }
+
+        public static Uri buildWeatherLocation(String locationSetting) {
+            return CONTENT_URI.buildUpon().appendPath(locationSetting).build();
+        }
+
+        public static Uri buildWeatherLocationWithStartDate(
+                String locationSetting, String startDate) {
+            return CONTENT_URI.buildUpon().appendPath(locationSetting)
+                    .appendQueryParameter(COLUMN_DATETEXT, startDate).build();
+        }
+
+        public static Uri buildWeatherLocationWithDate(String locationSetting, String date) {
+            return CONTENT_URI.buildUpon().appendPath(locationSetting).appendPath(date).build();
+        }
+
+        public static String getLocationSettingFromUri(Uri uri) {
+            return uri.getPathSegments().get(1);
+        }
+        public static String getDateFromUri(Uri uri) {
+            return uri.getPathSegments().get(2);
+        }
+
+        public static String getStartDateFromUri(Uri uri) {
+            return uri.getQueryParameter(COLUMN_DATETEXT);
+        }
     }
 
 }

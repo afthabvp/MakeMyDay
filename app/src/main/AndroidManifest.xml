@@ -3,6 +3,7 @@
     package="com.example.goahead.makemyday" >
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
     <application
         android:allowBackup="true"
@@ -36,8 +37,10 @@
         </activity>
 
         <provider
-            android:authorities= "com.example.goahead.makemyday"
-            android:name=".data.WeatherProvider" />
+            android:authorities="com.example.goahead.makemyday"
+            android:name=".data.WeatherProvider"
+            android:enabled="true"
+            android:exported="false"/>
     </application>
 
 </manifest>

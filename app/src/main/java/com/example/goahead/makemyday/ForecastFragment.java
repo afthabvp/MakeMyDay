@@ -14,6 +14,10 @@ import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.LoaderManager;
+import android.support.v4.content.CursorLoader;
+import android.support.v4.content.Loader;
+import android.support.v4.widget.SimpleCursorAdapter;
 import android.text.format.Time;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -47,6 +51,7 @@ import java.util.Vector;
 import android.content.SharedPreferences;
 import android.net.Uri;
 import android.preference.PreferenceManager;
+import android.widget.TextView;
 
 import com.example.goahead.makemyday.data.WeatherContract;
 import com.example.goahead.makemyday.data.WeatherContract.LocationEntry;
@@ -55,11 +60,50 @@ import com.example.goahead.makemyday.data.WeatherContract.WeatherEntry;
 /**
  * Created by spartan300 on 15/9/15.
  */
-public class ForecastFragment extends Fragment {
+public class ForecastFragment extends Fragment implements LoaderManager.LoaderCallbacks<Cursor> {
 
-    private ArrayAdapter<String> mForecastAdapter;
+    private SimpleCursorAdapter mForecastAdapter;
+
+    private String mLocation;
+
+    private static final int FORECAST_LOADER = 0;
     public ForecastFragment() {
     }
+
+
+
+
+    // For the forecast view we're showing only a small subset of the stored data.
+    // Specify the columns we need.
+    private static final String[] FORECAST_COLUMNS = {
+            // In this case the id needs to be fully qualified with a table name, since
+            // the content provider joins the location & weather tables in the background
+            // (both have an _id column)
+            // On the one hand, that's annoying.  On the other, you can search the weather table
+            // using the location set by the user, which is only in the Location table.
+            // So the convenience is worth it.
+            WeatherEntry.TABLE_NAME + "." + WeatherEntry._ID,
+            WeatherEntry.COLUMN_DATETEXT,
+            WeatherEntry.COLUMN_SHORT_DESC,
+            WeatherEntry.COLUMN_MAX_TEMP,
+            WeatherEntry.COLUMN_MIN_TEMP,
+            LocationEntry.COLUMN_LOCATION_SETTING
+    };
+    // These indices are tied to FORECAST_COLUMNS.  If FORECAST_COLUMNS changes, these
+    // must change.
+    public static final int COL_WEATHER_ID = 0;
+    public static final int COL_WEATHER_DATE = 1;
+    public static final int COL_WEATHER_DESC = 2;
+    public static final int COL_WEATHER_MAX_TEMP = 3;
+    public static final int COL_WEATHER_MIN_TEMP = 4;
+    public static final int COL_LOCATION_SETTING = 5;
+
+    @Override
+    public void onActivityCreated(Bundle savedInstanceState) {
+        getLoaderManager().restartLoader(FORECAST_LOADER, null, this);
+        super.onActivityCreated(savedInstanceState);
+    }
+
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -92,11 +136,10 @@ public class ForecastFragment extends Fragment {
 
 
     private void updateWeather() {
-        FetchWeatherTask fetchWeatherTask=new FetchWeatherTask(getActivity(), mForecastAdapter);
+        FetchWeatherTask fetchWeatherTask=new FetchWeatherTask(getActivity());
        // SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
         //String location = prefs.getString(getString(R.string.pref_locaton_key),getString(R.string.pref_location_default));
         String location = Utility.getPreferredLocation(getActivity());;
-        String units = Utility.getPreferredUnits(getActivity());
 
         //weatherTask.execute(location, units);
         fetchWeatherTask.execute(location);
@@ -108,51 +151,137 @@ public class ForecastFragment extends Fragment {
         super.onStart();
         updateWeather();
     }
+    @Override
+    public void onResume() {
+        super.onResume();
+        if (mLocation != null && !mLocation.equals(Utility.getPreferredLocation(getActivity()))) {
+            getLoaderManager().restartLoader(FORECAST_LOADER, null, this);
+        }
+    }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_main, container, false);
+        mForecastAdapter = new SimpleCursorAdapter(
+                getActivity(),
+                R.layout.list_item_forecast,
+                null,
+                // The columns names to use to fill the textViews
+                new String[] {
+                        WeatherEntry.COLUMN_DATETEXT,
+                        WeatherEntry.COLUMN_SHORT_DESC,
+                        WeatherEntry.COLUMN_MAX_TEMP,
+                        WeatherEntry.COLUMN_MIN_TEMP
+                },
+                // The textViews to fill with the data pulled from the columns above
+                new int[] {
+                        R.id.list_item_date_textview,
+                        R.id.list_item_forecast_textview,
+                        R.id.list_item_high_textview,
+                        R.id.list_item_low_textview
+                },
+                0
+        );
 
-         /*  String[] forecastArray = {
-                    "Today - Sunny - 88/63",
-                    "Tomarrow - Foggy - 70/40",
-                    "weds - Cloudy - 72/63",
-                    "thurs - Asteroids - 75/65",
-                    "Fri - Heavy Rain - 65/56",
-                    "Sat - HELP TRAPPED IN WEATHERSTATION - 60/51",
-                    "Sun - Sunny - 80/68"
-
-            };
-            List<String> weekForecast = new ArrayList<String>(
-                    Arrays.asList(forecastArray));
-*/
-
-            mForecastAdapter = new ArrayAdapter<String>(
-                    getActivity(),
-                    R.layout.list_item_forecast,
-                    R.id.list_item_forecast_textview,
-                   new ArrayList<String>()
-                   // weekForecast
-            );
-
-            ListView listView=(ListView) rootView.findViewById(R.id.listview_forecast);
-            listView.setAdapter(mForecastAdapter);
-        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+        mForecastAdapter.setViewBinder(new SimpleCursorAdapter.ViewBinder() {
             @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                String forecastStr=mForecastAdapter.getItem(position);
-               // Toast.makeText(getActivity(),forecastStr,Toast.LENGTH_SHORT).show(); //   Toast mainly to pop up the  click string
-                Intent intent = new Intent(new Intent(getActivity(),DetailActivity.class)).
-                        putExtra(Intent.EXTRA_TEXT,forecastStr);
-                startActivity(intent);
+            public boolean setViewValue(View view, Cursor cursor, int columnIndex) {
+                boolean isMetric = Utility.isMetric(getActivity());
+                switch (columnIndex) {
+                    case COL_WEATHER_MAX_TEMP:
+                    case COL_WEATHER_MIN_TEMP:
+                        // we have to do some formatting and possibly a conversion
+                        ((TextView) view).setText(Utility.formatTemperature(
+                                cursor.getDouble(columnIndex), isMetric));
+                        return true;
+                    case COL_WEATHER_DATE:
+                        String dateString = cursor.getString(columnIndex);
+                        TextView dateView = (TextView) view;
+                        dateView.setText(Utility.formatDate(dateString));
+                        return true;
+                }
+                return false;
             }
         });
 
-        return rootView;
+
+        ListView listView = (ListView) rootView.findViewById(R.id.listview_forecast);
+        listView.setAdapter(mForecastAdapter);;
+
+        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                Cursor cursor = mForecastAdapter.getCursor();
+                if (cursor != null && cursor.moveToPosition(position)) {
+//                    String dateString = Utility.formatDate(cursor.getString(COL_WEATHER_DATE));
+//                    String weatherDesc = cursor.getString(COL_WEATHER_DESC);
+//
+//                    boolean isMetric = Utility.isMetric(getActivity());
+//                    String high = Utility.formatTemperature(
+//                            cursor.getDouble(COL_WEATHER_MAX_TEMP), isMetric
+//                    );
+//
+//                    String low = Utility.formatTemperature(
+//                            cursor.getDouble(COL_WEATHER_MIN_TEMP), isMetric
+//                    );
+//
+//                    String detailString = String.format("%s - %s - %s/%s",
+//                            dateString, weatherDesc, high, low);
+
+                    Intent detailActivityIntent = new Intent(getActivity(), DetailActivity.class);
+                    detailActivityIntent.putExtra(DetailActivityFragment.DATE_KEY, cursor.getString(COL_WEATHER_DATE));
+                    startActivity(detailActivityIntent);
+                }
+            }
+        });
+
+    return rootView;
 
 }
 
+    @Override
+    public Loader<Cursor> onCreateLoader(int id, Bundle args) {
+
+        mLocation = Utility.getPreferredLocation(getActivity());
+
+        // Sort order:  Ascending, by date.
+        String sortOrder = WeatherEntry.COLUMN_DATETEXT + " ASC";
+
+
+
+        // To only show current and future dates, get the String representation for today,
+        // and filter the query to return weather only for dates after or including today.
+        // Only return data after today.
+        String startDate = WeatherContract.getDbDateString(new Date());
+
+        Uri weatherForLocationUri = WeatherEntry.buildWeatherLocationWithStartDate(
+                mLocation, startDate);
+
+        // Now create and return a CursorLoader that will take care of
+        // creating a Cursor for the data being displayed.
+        return new CursorLoader(
+                getActivity(),
+                weatherForLocationUri,
+                FORECAST_COLUMNS,
+                null,
+                null,
+                sortOrder
+        );
+    }
+
+    @Override
+    public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
+        mForecastAdapter.swapCursor(data);
+
+
+    }
+
+    @Override
+    public void onLoaderReset(Loader<Cursor> loader) {
+        mForecastAdapter.swapCursor(null);
+
+    }
 
 
     public class FetchWeatherTask extends AsyncTask<String,Void,String[]> {
@@ -161,40 +290,12 @@ public class ForecastFragment extends Fragment {
         private boolean DEBUG = true;
 
 
-        private ArrayAdapter<String> mForecastAdapter;
         private final Context mContext;
 
-        public FetchWeatherTask(Context context, ArrayAdapter<String> forecastAdapter) {
+        public FetchWeatherTask(Context context) {
             mContext = context;
-            mForecastAdapter = forecastAdapter;
         }
 
-        private long insertLocationInDatabase(String locationSetting, String cityName, double lat, double lon) {
-            Cursor cursor = mContext.getContentResolver().query(
-                    LocationEntry.CONTENT_URI,
-                    new String[]{LocationEntry._ID},
-                    LocationEntry.COLUMN_LOCATION_SETTING + " = ?",
-                    new String[]{locationSetting},
-                    null);
-
-            if (cursor.moveToFirst()) {
-                Log.v(LOG_TAG, "Found it!");
-                int locationIdIndex = cursor.getColumnIndex(LocationEntry._ID);
-                return cursor.getLong(locationIdIndex);
-            } else {
-                Log.v(LOG_TAG, "Didn't find it in the database, inserting now!");
-                ContentValues locationValues = new ContentValues();
-                locationValues.put(LocationEntry.COLUMN_LOCATION_SETTING, locationSetting);
-                locationValues.put(LocationEntry.COLUMN_CITY_NAME, cityName);
-                locationValues.put(LocationEntry.COLUMN_COORD_LAT, lat);
-                locationValues.put(LocationEntry.COLUMN_COORD_LONG, lon);
-
-                Uri locationInsertUri = mContext.getContentResolver()
-                        .insert(LocationEntry.CONTENT_URI, locationValues);
-
-                return ContentUris.parseId(locationInsertUri);
-            }
-        }
 
 
         /* The date/time conversion code is going to be moved outside the asynctask later,
@@ -303,103 +404,18 @@ public class ForecastFragment extends Fragment {
 
             try {
               // return getWeatherDataFromJson(forecastJsonStr, 7);
-                return getWeatherDataFromJson(forecastJsonStr, numDays, params[0]);
+                getWeatherDataFromJson(forecastJsonStr, numDays, params[0]);
+                return null;
             } catch (JSONException e) {
                 Log.e(LOG_TAG, e.getMessage(), e);
             }
             return null;
         }
 
-        @Override
-        protected void onPostExecute(String[] result) {
-            if (result != null) {
-                mForecastAdapter.clear();
-                for (String s : result) {
-                    mForecastAdapter.add(s);
-
-                }
-
-
-            }
-        }
 
 
 
-        /**
-         * Take the String representing the complete forecast in JSON Format and
-         * pull out the data we need to construct the Strings needed for the wireframes.
-         * <p>
-         * Fortunately parsing is easy:  constructor takes the JSON string and converts it
-         * into an Object hierarchy for us.
-         */
-        private String[] getWeatherDataFromJson(String forecastJsonStr, int numDays)
-                throws JSONException {
 
-            // These are the names of the JSON objects that need to be extracted.
-            final String OWM_LIST = "list";
-            final String OWM_WEATHER = "weather";
-            final String OWM_TEMPERATURE = "temp";
-            final String OWM_MAX = "max";
-            final String OWM_MIN = "min";
-            final String OWM_DESCRIPTION = "main";
-            JSONObject forecastJson = new JSONObject(forecastJsonStr);
-            JSONArray weatherArray = forecastJson.getJSONArray(OWM_LIST);
-
-            // OWM returns daily forecasts based upon the local time of the city that is being
-            // asked for, which means that we need to know the GMT offset to translate this data
-            // properly.
-
-            // Since this data is also sent in-order and the first day is always the
-            // current day, we're going to take advantage of that to get a nice
-            // normalized UTC date for all of our weather.
-
-            Time dayTime = new Time();
-            dayTime.setToNow();
-
-            // we start at the day returned by local time. Otherwise this is a mess.
-            int julianStartDay = Time.getJulianDay(System.currentTimeMillis(), dayTime.gmtoff);
-
-            // now we work exclusively in UTC
-            dayTime = new Time();
-
-            String[] resultStrs = new String[numDays];
-            for (int i = 0; i < weatherArray.length(); i++) {
-                // For now, using the format "Day, description, hi/low"
-                String day;
-                String description;
-                String highAndLow;
-
-                // Get the JSON object representing the day
-                JSONObject dayForecast = weatherArray.getJSONObject(i);
-
-                // The date/time is returned as a long.  We need to convert that
-                // into something human-readable, since most people won't read "1400356800" as
-                // "this saturday".
-                long dateTime;
-                // Cheating to convert this to UTC time, which is what we want anyhow
-                dateTime = dayTime.setJulianDay(julianStartDay + i);
-                day = getReadableDateString(dateTime);
-
-                // description is in a child array called "weather", which is 1 element long.
-                JSONObject weatherObject = dayForecast.getJSONArray(OWM_WEATHER).getJSONObject(0);
-                description = weatherObject.getString(OWM_DESCRIPTION);
-
-                // Temperatures are in a child object called "temp".  Try not to name variables
-                // "temp" when working with temperature.  It confuses everybody.
-                JSONObject temperatureObject = dayForecast.getJSONObject(OWM_TEMPERATURE);
-                double high = temperatureObject.getDouble(OWM_MAX);
-                double low = temperatureObject.getDouble(OWM_MIN);
-
-                highAndLow = formatHighLows(high, low);
-                resultStrs[i] = day + " - " + description + " - " + highAndLow;
-            }
-
-            for (String res : resultStrs) {
-                Log.d(LOG_TAG, "Entries :" + res);
-
-            }
-            return resultStrs;
-        }
 
 
         @TargetApi(Build.VERSION_CODES.HONEYCOMB)
@@ -446,9 +462,7 @@ public class ForecastFragment extends Fragment {
             Log.v(LOG_TAG, cityName + ", with coord: " + cityLatitude + " " + cityLongitude);
 
             // Insert the location into the database.
-            // The function referenced here is not yet implemented, so we've commented it out for now.
-            long locationID = insertLocationInDatabase(
-                    locationSetting, cityName, cityLatitude, cityLongitude);
+            long locationID = addLocation(locationSetting, cityName, cityLatitude, cityLongitude);
 
             String[] resultStrs = new String[numDays];
             // Get and insert the new weather information into the database
@@ -510,43 +524,90 @@ public class ForecastFragment extends Fragment {
                 weatherValues.put(WeatherEntry.COLUMN_WEATHER_ID, weatherId);
 
                 cVVector.add(weatherValues);
-                String highAndLow = formatHighLows(high, low);
 
+                String highAndLow = formatHighLows(high, low);
                 String day = getReadableDateString(dateTime);
                 resultStrs[i] = day + " - " + description + " - " + highAndLow;
             }
 
-            if (cVVector.size() > 0) {
-                ContentValues[] cvArray = new ContentValues[cVVector.size()];
-                cVVector.toArray(cvArray);
-                int rowsInserted = mContext.getContentResolver()
-                        .bulkInsert(WeatherEntry.CONTENT_URI, cvArray);
-                Log.v(LOG_TAG, "inserted " + rowsInserted + " rows of weather data");
-                // Use a DEBUG variable to gate whether or not you do this, so you can easily
-                // turn it on and off, and so that it's easy to see what you can rip out if
-                // you ever want to remove it.
-                if (DEBUG) {
-                    Cursor weatherCursor = mContext.getContentResolver().query(
-                            WeatherEntry.CONTENT_URI,
-                            null,
-                            null,
-                            null,
-                            null
-                    );
+            insertWeatherIntoDatabase(cVVector);
 
-                    if (weatherCursor.moveToFirst()) {
-                        ContentValues resultValues = new ContentValues();
-                        DatabaseUtils.cursorRowToContentValues(weatherCursor, resultValues);
-                        Log.v(LOG_TAG, "Query succeeded! **********");
-                        for (String key : resultValues.keySet()) {
-                            Log.v(LOG_TAG, key + ": " + resultValues.getAsString(key));
-                        }
-                    } else {
-                        Log.v(LOG_TAG, "Query failed! :( **********");
+            return resultStrs;
+        }
+
+
+    @TargetApi(Build.VERSION_CODES.HONEYCOMB)
+    private void insertWeatherIntoDatabase(Vector<ContentValues> CVVector) {
+        if (CVVector.size() > 0) {
+            ContentValues[] contentValuesArray = new ContentValues[CVVector.size()];
+            CVVector.toArray(contentValuesArray);
+
+            int rowsInserted = mContext.getContentResolver().bulkInsert(WeatherEntry.CONTENT_URI, contentValuesArray);
+
+            // Use a DEBUG variable to gate whether or not you do this, so you can easily
+            // turn it on and off, and so that it's easy to see what you can rip out if
+            // you ever want to remove it.
+            if (DEBUG) {
+                Cursor weatherCursor = mContext.getContentResolver().query(
+                        WeatherEntry.CONTENT_URI,
+                        null,
+                        null,
+                        null,
+                        null
+                );
+
+                if (weatherCursor.moveToFirst()) {
+                    ContentValues resultValues = new ContentValues();
+                    DatabaseUtils.cursorRowToContentValues(weatherCursor, resultValues);
+                    Log.v(LOG_TAG, "Query succeeded! **********");
+                    for (String key : resultValues.keySet()) {
+                        Log.v(LOG_TAG, key + ": " + resultValues.getAsString(key));
                     }
+                } else {
+                    Log.v(LOG_TAG, "Query failed! :( **********");
                 }
             }
-            return resultStrs;
+        }
+    }
+
+        /**
+         * Helper method to handle insertion of a new location in the weather database.
+         *
+         * @param locationSetting The location string used to request updates from the server.
+         * @param cityName A human-readable city name, e.g "Mountain View"
+         * @param lat the latitude of the city
+         * @param lon the longitude of the city
+         * @return the row ID of the added location.
+         */
+        private long addLocation(String locationSetting, String cityName, double lat, double lon) {
+
+            Log.v(LOG_TAG, "inserting " + cityName + ", with coord: " + lat + ", " + lon);
+
+            // First, check if the location with this city name exists in the db
+            Cursor cursor = mContext.getContentResolver().query(
+                    LocationEntry.CONTENT_URI,
+                    new String[]{LocationEntry._ID},
+                    LocationEntry.COLUMN_LOCATION_SETTING + " = ?",
+                    new String[]{locationSetting},
+                    null);
+
+            if (cursor.moveToFirst()) {
+                Log.v(LOG_TAG, "Found it in the database!");
+                int locationIdIndex = cursor.getColumnIndex(LocationEntry._ID);
+                return cursor.getLong(locationIdIndex);
+            } else {
+                Log.v(LOG_TAG, "Didn't find it in the database, inserting now!");
+                ContentValues locationValues = new ContentValues();
+                locationValues.put(LocationEntry.COLUMN_LOCATION_SETTING, locationSetting);
+                locationValues.put(LocationEntry.COLUMN_CITY_NAME, cityName);
+                locationValues.put(LocationEntry.COLUMN_COORD_LAT, lat);
+                locationValues.put(LocationEntry.COLUMN_COORD_LONG, lon);
+
+                Uri locationInsertUri = mContext.getContentResolver()
+                        .insert(LocationEntry.CONTENT_URI, locationValues);
+
+                return ContentUris.parseId(locationInsertUri);
+            }
         }
 
     }

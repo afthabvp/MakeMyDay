@@ -2,6 +2,7 @@ package com.example.goahead.makemyday.data;
 
 import android.content.ContentResolver;
 import android.content.ContentUris;
+import android.net.ParseException;
 import android.net.Uri;
 import android.provider.BaseColumns;
 
@@ -74,6 +75,22 @@ public class WeatherContract {
         SimpleDateFormat sdf = new SimpleDateFormat(DATE_FORMAT);
         return sdf.format(date);
     }
+
+    /**
+     * Converts a dateText to a long Unix time representation
+     * @param dateText the input date string
+     * @return the Date object
+     */
+    public static Date getDateFromDb(String dateText) {
+        SimpleDateFormat dbDateFormat = new SimpleDateFormat(DATE_FORMAT);
+        try {
+            return dbDateFormat.parse(dateText);
+        } catch ( java.text.ParseException e ) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
 
 
     public static final class WeatherEntry implements BaseColumns {

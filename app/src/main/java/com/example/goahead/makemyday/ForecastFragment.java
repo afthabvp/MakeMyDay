@@ -536,11 +536,13 @@ public class ForecastFragment extends Fragment implements LoaderManager.LoaderCa
         }
 
 
+
     @TargetApi(Build.VERSION_CODES.HONEYCOMB)
     private void insertWeatherIntoDatabase(Vector<ContentValues> CVVector) {
         if (CVVector.size() > 0) {
             ContentValues[] contentValuesArray = new ContentValues[CVVector.size()];
             CVVector.toArray(contentValuesArray);
+
 
             int rowsInserted = mContext.getContentResolver().bulkInsert(WeatherEntry.CONTENT_URI, contentValuesArray);
 
@@ -560,6 +562,7 @@ public class ForecastFragment extends Fragment implements LoaderManager.LoaderCa
                     ContentValues resultValues = new ContentValues();
                     DatabaseUtils.cursorRowToContentValues(weatherCursor, resultValues);
                     Log.v(LOG_TAG, "Query succeeded! **********");
+
                     for (String key : resultValues.keySet()) {
                         Log.v(LOG_TAG, key + ": " + resultValues.getAsString(key));
                     }

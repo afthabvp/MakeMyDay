@@ -87,8 +87,11 @@ public class ForecastFragment extends Fragment implements LoaderManager.LoaderCa
             WeatherEntry.COLUMN_SHORT_DESC,
             WeatherEntry.COLUMN_MAX_TEMP,
             WeatherEntry.COLUMN_MIN_TEMP,
-            LocationEntry.COLUMN_LOCATION_SETTING
+            LocationEntry.COLUMN_LOCATION_SETTING,
+            WeatherEntry.COLUMN_WEATHER_ID
     };
+
+
     // These indices are tied to FORECAST_COLUMNS.  If FORECAST_COLUMNS changes, these
     // must change.
     public static final int COL_WEATHER_ID = 0;
@@ -97,6 +100,8 @@ public class ForecastFragment extends Fragment implements LoaderManager.LoaderCa
     public static final int COL_WEATHER_MAX_TEMP = 3;
     public static final int COL_WEATHER_MIN_TEMP = 4;
     public static final int COL_LOCATION_SETTING = 5;
+    public static final int COL_WEATHER_CONDITION_ID = 6;
+
 
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
@@ -313,7 +318,7 @@ public class ForecastFragment extends Fragment implements LoaderManager.LoaderCa
                 if (params.length == 0) {
                     return null;
                 }
-                String url_s = "http://api.openweathermap.org/data/2.5/forecast/daily?q=" + params[0] + "&mode="+format+"&units="+unit+"&cnt="+numDays+"";
+                String url_s = "http://api.openweathermap.org/data/2.5/forecast/daily?q=" + params[0] + "&mode="+format+"&units="+unit+"&cnt="+numDays+"&APPID=561f8515049db171c5bed8b8dbfb0669";
                 url = new URL(url_s);
 
 

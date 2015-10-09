@@ -62,7 +62,7 @@ import com.example.goahead.makemyday.data.WeatherContract.WeatherEntry;
  */
 public class ForecastFragment extends Fragment implements LoaderManager.LoaderCallbacks<Cursor> {
 
-    private SimpleCursorAdapter mForecastAdapter;
+    private ForecastAdapter mForecastAdapter;
 
     private String mLocation;
 
@@ -162,50 +162,11 @@ public class ForecastFragment extends Fragment implements LoaderManager.LoaderCa
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
+
+        // The ArrayAdapter will take data from a source and
+        // use it to populate the ListView it's attached to.
+        mForecastAdapter = new ForecastAdapter(getActivity(), null, 0);
         View rootView = inflater.inflate(R.layout.fragment_main, container, false);
-        mForecastAdapter = new SimpleCursorAdapter(
-                getActivity(),
-                R.layout.list_item_forecast,
-                null,
-                // The columns names to use to fill the textViews
-                new String[] {
-                        WeatherEntry.COLUMN_DATETEXT,
-                        WeatherEntry.COLUMN_SHORT_DESC,
-                        WeatherEntry.COLUMN_MAX_TEMP,
-                        WeatherEntry.COLUMN_MIN_TEMP
-                },
-                // The textViews to fill with the data pulled from the columns above
-                new int[] {
-                        R.id.list_item_date_textview,
-                        R.id.list_item_forecast_textview,
-                        R.id.list_item_high_textview,
-                        R.id.list_item_low_textview
-                },
-                0
-        );
-
-        mForecastAdapter.setViewBinder(new SimpleCursorAdapter.ViewBinder() {
-            @Override
-            public boolean setViewValue(View view, Cursor cursor, int columnIndex) {
-                boolean isMetric = Utility.isMetric(getActivity());
-                switch (columnIndex) {
-                    case COL_WEATHER_MAX_TEMP:
-                    case COL_WEATHER_MIN_TEMP:
-                        // we have to do some formatting and possibly a conversion
-                        ((TextView) view).setText(Utility.formatTemperature(
-                                cursor.getDouble(columnIndex), isMetric));
-                        return true;
-                    case COL_WEATHER_DATE:
-                        String dateString = cursor.getString(columnIndex);
-                        TextView dateView = (TextView) view;
-                        dateView.setText(Utility.formatDate(dateString));
-                        return true;
-                }
-                return false;
-            }
-        });
-
-
         ListView listView = (ListView) rootView.findViewById(R.id.listview_forecast);
         listView.setAdapter(mForecastAdapter);;
 
@@ -536,11 +497,13 @@ public class ForecastFragment extends Fragment implements LoaderManager.LoaderCa
         }
 
 
+
     @TargetApi(Build.VERSION_CODES.HONEYCOMB)
     private void insertWeatherIntoDatabase(Vector<ContentValues> CVVector) {
         if (CVVector.size() > 0) {
             ContentValues[] contentValuesArray = new ContentValues[CVVector.size()];
             CVVector.toArray(contentValuesArray);
+
 
             int rowsInserted = mContext.getContentResolver().bulkInsert(WeatherEntry.CONTENT_URI, contentValuesArray);
 
@@ -560,6 +523,7 @@ public class ForecastFragment extends Fragment implements LoaderManager.LoaderCa
                     ContentValues resultValues = new ContentValues();
                     DatabaseUtils.cursorRowToContentValues(weatherCursor, resultValues);
                     Log.v(LOG_TAG, "Query succeeded! **********");
+
                     for (String key : resultValues.keySet()) {
                         Log.v(LOG_TAG, key + ": " + resultValues.getAsString(key));
                     }

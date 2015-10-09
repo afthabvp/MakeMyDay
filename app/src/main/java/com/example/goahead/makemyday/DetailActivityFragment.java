@@ -37,6 +37,7 @@ public class DetailActivityFragment extends Fragment implements  LoaderManager.L
 
     public static final String LOCATION_KEY = "location";
     public static final String DATE_KEY = "forecast_date";
+    private ShareActionProvider mShareActionProvider;
     public DetailActivityFragment() {
         setHasOptionsMenu(true);
 
@@ -83,52 +84,6 @@ public class DetailActivityFragment extends Fragment implements  LoaderManager.L
         }
     }
 
-    @Override
-    public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
-        if (!data.moveToFirst()) {
-            return;
-        }
-
-        String dateString = Utility.formatDate(
-                data.getString(data.getColumnIndex(WeatherContract.WeatherEntry.COLUMN_DATETEXT))
-        );
-
-        Log.d(LOG_TAG, dateString);
-
-        String weatherDescription =
-                data.getString(data.getColumnIndex(WeatherContract.WeatherEntry.COLUMN_SHORT_DESC));
-
-        boolean isMetric = Utility.isMetric(getActivity());
-        String high = Utility.formatTemperature(
-                data.getDouble(data.getColumnIndex(WeatherContract.WeatherEntry.COLUMN_MAX_TEMP)), isMetric);
-        String low = Utility.formatTemperature(
-                data.getDouble(data.getColumnIndex(WeatherContract.WeatherEntry.COLUMN_MIN_TEMP)), isMetric);
-
-        mForecastStr = String.format("%s - %s - %s/%s",
-                dateString, weatherDescription, high, low);
-
-        ((TextView) getView().findViewById(R.id.detail_low_textview)).setText(low);
-        ((TextView) getView().findViewById(R.id.detail_high_textview)).setText(high);
-        ((TextView) getView().findViewById(R.id.detail_date_textview)).setText(dateString);
-        ((TextView) getView().findViewById(R.id.detail_forecast_textview)).setText(weatherDescription);
-
-    }
-
-    @Override
-    public void onCreateOptionsMenu(Menu menu,MenuInflater inflater) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        inflater.inflate(R.menu.detailfragment, menu);
-        MenuItem menuItem = menu.findItem(R.id.action_share);
-        ShareActionProvider mShareActionProvider = (ShareActionProvider) MenuItemCompat.getActionProvider(menuItem);
-
-        if(mShareActionProvider != null){
-            mShareActionProvider.setShareIntent(createShareForecastIntent());
-        }
-        else {
-            Log.d(LOG_TAG,"Share action provide is null");
-        }
-
-    }
 
 
     @Override
@@ -143,6 +98,25 @@ public class DetailActivityFragment extends Fragment implements  LoaderManager.L
         */
         return  rootView;
     }
+
+    @Override
+    public void onCreateOptionsMenu(Menu menu,MenuInflater inflater) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        inflater.inflate(R.menu.detailfragment, menu);
+        MenuItem menuItem = menu.findItem(R.id.action_share);
+        mShareActionProvider = (ShareActionProvider) MenuItemCompat.getActionProvider(menuItem);
+
+        if(mShareActionProvider != null){
+            mShareActionProvider.setShareIntent(createShareForecastIntent());
+        }
+        else {
+            Log.d(LOG_TAG, "Share action provide is null");
+        }
+
+    }
+
+
+
 
     private Intent createShareForecastIntent(){
         Intent shareIntent = new Intent(Intent.ACTION_SEND);
@@ -180,6 +154,44 @@ public class DetailActivityFragment extends Fragment implements  LoaderManager.L
                 sortOrder
         );
     }
+    @Override
+    public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
+        if (!data.moveToFirst()) {
+            return;
+        }
+
+        String dateString = Utility.formatDate(
+                data.getString(data.getColumnIndex(WeatherContract.WeatherEntry.COLUMN_DATETEXT))
+        );
+
+        Log.d(LOG_TAG, dateString);
+
+        String weatherDescription =
+                data.getString(data.getColumnIndex(WeatherContract.WeatherEntry.COLUMN_SHORT_DESC));
+
+        boolean isMetric = Utility.isMetric(getActivity());
+        String high = Utility.formatTemperature(
+                data.getDouble(data.getColumnIndex(WeatherContract.WeatherEntry.COLUMN_MAX_TEMP)), isMetric);
+        String low = Utility.formatTemperature(
+                data.getDouble(data.getColumnIndex(WeatherContract.WeatherEntry.COLUMN_MIN_TEMP)), isMetric);
+
+        mForecastStr = String.format("%s - %s - %s/%s",
+                dateString, weatherDescription, high, low);
+
+        ((TextView) getView().findViewById(R.id.detail_low_textview)).setText(low);
+        ((TextView) getView().findViewById(R.id.detail_high_textview)).setText(high);
+        ((TextView) getView().findViewById(R.id.detail_date_textview)).setText(dateString);
+        ((TextView) getView().findViewById(R.id.detail_forecast_textview)).setText(weatherDescription);
+
+
+
+        // If onCreateOptionsMenu has already happened, we need to update the share intent now.
+        if (mShareActionProvider != null) {
+            mShareActionProvider.setShareIntent(createShareForecastIntent());
+        }
+
+    }
+
 
 
 

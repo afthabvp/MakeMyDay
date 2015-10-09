@@ -171,9 +171,9 @@ public class DetailActivityFragment extends Fragment implements  LoaderManager.L
 
         boolean isMetric = Utility.isMetric(getActivity());
         String high = Utility.formatTemperature(
-                data.getDouble(data.getColumnIndex(WeatherContract.WeatherEntry.COLUMN_MAX_TEMP)), isMetric);
+                getActivity(),data.getDouble(data.getColumnIndex(WeatherContract.WeatherEntry.COLUMN_MAX_TEMP)), isMetric);
         String low = Utility.formatTemperature(
-                data.getDouble(data.getColumnIndex(WeatherContract.WeatherEntry.COLUMN_MIN_TEMP)), isMetric);
+                getActivity(),data.getDouble(data.getColumnIndex(WeatherContract.WeatherEntry.COLUMN_MIN_TEMP)), isMetric);
 
         mForecastStr = String.format("%s - %s - %s/%s",
                 dateString, weatherDescription, high, low);

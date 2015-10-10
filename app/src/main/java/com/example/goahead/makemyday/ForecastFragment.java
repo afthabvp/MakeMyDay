@@ -144,7 +144,7 @@ public class ForecastFragment extends Fragment implements LoaderManager.LoaderCa
         FetchWeatherTask fetchWeatherTask=new FetchWeatherTask(getActivity());
        // SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
         //String location = prefs.getString(getString(R.string.pref_locaton_key),getString(R.string.pref_location_default));
-        String location = Utility.getPreferredLocation(getActivity());;
+        String location = Utility.getPreferredLocation(getActivity());
 
         //weatherTask.execute(location, units);
         fetchWeatherTask.execute(location);
@@ -173,7 +173,7 @@ public class ForecastFragment extends Fragment implements LoaderManager.LoaderCa
         mForecastAdapter = new ForecastAdapter(getActivity(), null, 0);
         View rootView = inflater.inflate(R.layout.fragment_main, container, false);
         ListView listView = (ListView) rootView.findViewById(R.id.listview_forecast);
-        listView.setAdapter(mForecastAdapter);;
+        listView.setAdapter(mForecastAdapter);
 
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override

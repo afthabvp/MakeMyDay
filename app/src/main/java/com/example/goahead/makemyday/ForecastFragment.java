@@ -102,6 +102,18 @@ public class ForecastFragment extends Fragment implements LoaderManager.LoaderCa
     public static final int COL_LOCATION_SETTING = 5;
     public static final int COL_WEATHER_CONDITION_ID = 6;
 
+    /**
+     * A callback interface that all activities containing this fragment must
+     * implement. This mechanism allows activities to be notified of item
+     * selections.
+     */
+    public interface Callback {
+        /**
+         * DetailFragmentCallback for when an item has been selected.
+         */
+        public void onItemSelected(String date);
+    }
+
 
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
@@ -175,6 +187,10 @@ public class ForecastFragment extends Fragment implements LoaderManager.LoaderCa
         ListView listView = (ListView) rootView.findViewById(R.id.listview_forecast);
         listView.setAdapter(mForecastAdapter);
 
+
+
+
+
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
@@ -195,9 +211,12 @@ public class ForecastFragment extends Fragment implements LoaderManager.LoaderCa
 //                    String detailString = String.format("%s - %s - %s/%s",
 //                            dateString, weatherDesc, high, low);
 
-                    Intent detailActivityIntent = new Intent(getActivity(), DetailActivity.class);
-                    detailActivityIntent.putExtra(DetailActivityFragment.DATE_KEY, cursor.getString(COL_WEATHER_DATE));
-                    startActivity(detailActivityIntent);
+
+                    ((Callback)getActivity())
+                            .onItemSelected(cursor.getString(COL_WEATHER_DATE));
+                   // Intent detailActivityIntent = new Intent(getActivity(), DetailActivity.class);
+                    //detailActivityIntent.putExtra(DetailActivityFragment.DATE_KEY, cursor.getString(COL_WEATHER_DATE));
+                    //startActivity(detailActivityIntent);
                 }
             }
         });

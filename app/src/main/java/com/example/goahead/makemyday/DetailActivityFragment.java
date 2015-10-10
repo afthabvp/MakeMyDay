@@ -33,6 +33,7 @@ public class DetailActivityFragment extends Fragment implements  LoaderManager.L
 
     private String mForecastStr;
     private String mLocation;
+    private String mDateStr;
 
     private static final int DETAIL_LOADER = 0;
 
@@ -90,10 +91,15 @@ public class DetailActivityFragment extends Fragment implements  LoaderManager.L
 
     @Override
     public void onResume() {
+
         super.onResume();
-        if (mLocation != null && !mLocation.equals(Utility.getPreferredLocation(getActivity()))) {
+        Intent intent = getActivity().getIntent();
+        if (intent != null && intent.hasExtra(DATE_KEY) &&
+                mLocation != null &&
+                !mLocation.equals(Utility.getPreferredLocation(getActivity()))) {
             getLoaderManager().restartLoader(DETAIL_LOADER, null, this);
         }
+
     }
 
 
@@ -108,6 +114,15 @@ public class DetailActivityFragment extends Fragment implements  LoaderManager.L
             ((TextView)rootView.findViewById(R.id.detail_text)).setText(mForecastStr);
         }
         */
+
+        Bundle arguments = getArguments();
+        if (arguments != null) {
+            mDateStr = arguments.getString(DATE_KEY);
+        }
+
+        if (savedInstanceState != null) {
+            mLocation = savedInstanceState.getString(LOCATION_KEY);
+        }
 
         View rootView = inflater.inflate(R.layout.fragment_detail, container, false);
         mIconView = (ImageView) rootView.findViewById(R.id.detail_icon);
@@ -152,18 +167,15 @@ public class DetailActivityFragment extends Fragment implements  LoaderManager.L
 
     @Override
     public Loader<Cursor> onCreateLoader(int id, Bundle args) {
-        Intent intent = getActivity().getIntent();
-        if (intent == null || !intent.hasExtra(DATE_KEY)) {
-            return null;
-        }
-        String forecastDate = intent.getStringExtra(DATE_KEY);
-        Log.d(LOG_TAG, forecastDate);
+
         // Sort order: Ascending by date
         String sortOrder = WeatherContract.WeatherEntry.COLUMN_DATETEXT + " ASC";
 
         mLocation = Utility.getPreferredLocation(getActivity());
         Uri weatherForLocationUri = WeatherContract.WeatherEntry.buildWeatherLocationWithDate(
-                mLocation, forecastDate);
+                mLocation, mDateStr);
+
+
 
 
         // Now create and return a CursorLoader that will take care of

@@ -48,7 +48,7 @@
         </activity>
 
         <provider
-            android:authorities="com.example.goahead.makemyday"
+            android:authorities="@string/content_authority"
             android:name=".data.WeatherProvider"
             android:enabled="true"
             android:syncable="true"

@@ -56,6 +56,7 @@ import android.widget.TextView;
 import com.example.goahead.makemyday.data.WeatherContract;
 import com.example.goahead.makemyday.data.WeatherContract.LocationEntry;
 import com.example.goahead.makemyday.data.WeatherContract.WeatherEntry;
+import com.example.goahead.makemyday.service.SunshineService;
 
 /**
  * Created by spartan300 on 15/9/15.
@@ -157,13 +158,18 @@ public class ForecastFragment extends Fragment implements LoaderManager.LoaderCa
 
 
     private void updateWeather() {
-        FetchWeatherTask fetchWeatherTask=new FetchWeatherTask(getActivity());
+        //FetchWeatherTask fetchWeatherTask=new FetchWeatherTask(getActivity());
        // SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
         //String location = prefs.getString(getString(R.string.pref_locaton_key),getString(R.string.pref_location_default));
-        String location = Utility.getPreferredLocation(getActivity());
+       // String location = Utility.getPreferredLocation(getActivity());
 
         //weatherTask.execute(location, units);
-        fetchWeatherTask.execute(location);
+      //  fetchWeatherTask.execute(location);
+
+        Intent intent = new Intent(getActivity(), SunshineService.class);
+        intent.putExtra(SunshineService.LOCATION_QUERY_EXTRA,
+                Utility.getPreferredLocation(getActivity()));
+        getActivity().startService(intent);
 
     }
     @Override

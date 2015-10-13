@@ -59,4 +59,14 @@
 
     <string name="sync_account_type">makemyday.example.com</string>
     <string name="content_authority">com.example.goahead.makemyday</string>
+
+
+     <string name="format_notification">
+        Forecast: <xliff:g id="condition">%1$s</xliff:g> High: <xliff:g id="high">%2$s</xliff:g> Low: <xliff:g id="low">%3$s</xliff:g>
+    </string>
+
+
+    <!-- Strings related to Notification preference -->
+    <string name="pref_last_notification">last_notification</string>
+
 </resources>

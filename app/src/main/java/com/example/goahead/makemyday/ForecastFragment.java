@@ -58,7 +58,7 @@ import android.widget.TextView;
 import com.example.goahead.makemyday.data.WeatherContract;
 import com.example.goahead.makemyday.data.WeatherContract.LocationEntry;
 import com.example.goahead.makemyday.data.WeatherContract.WeatherEntry;
-import com.example.goahead.makemyday.service.SunshineService;
+import com.example.goahead.makemyday.sync.SunshineSyncAdapter;
 
 /**
  * Created by spartan300 on 15/9/15.
@@ -173,7 +173,7 @@ public class ForecastFragment extends Fragment implements LoaderManager.LoaderCa
                 Utility.getPreferredLocation(getActivity()));
         getActivity().startService(intent); */
 
-        Intent alarmIntent = new Intent(getActivity(), SunshineService.AlarmReceiver.class);
+      /*  Intent alarmIntent = new Intent(getActivity(), SunshineService.AlarmReceiver.class);
         alarmIntent.putExtra(SunshineService.LOCATION_QUERY_EXTRA, Utility.getPreferredLocation(getActivity()));
 
         //Wrap in a pending intent which only fires once.
@@ -182,7 +182,8 @@ public class ForecastFragment extends Fragment implements LoaderManager.LoaderCa
         AlarmManager am=(AlarmManager)getActivity().getSystemService(Context.ALARM_SERVICE);
 
         //Set the AlarmManager to wake up the system.
-        am.set(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + 5000, pi);
+        am.set(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + 5000, pi);*/
+        SunshineSyncAdapter.syncImmediately(getActivity());
     }
 
 

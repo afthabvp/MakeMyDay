@@ -64,6 +64,8 @@ import com.example.goahead.makemyday.sync.SunshineSyncAdapter;
  * Created by spartan300 on 15/9/15.
  */
 public class ForecastFragment extends Fragment implements LoaderManager.LoaderCallbacks<Cursor> {
+
+    public static final String LOG_TAG = ForecastFragment.class.getSimpleName();
     private boolean mUseTodayLayout;
 
     private ForecastAdapter mForecastAdapter;
@@ -149,9 +151,14 @@ public class ForecastFragment extends Fragment implements LoaderManager.LoaderCa
         int id = item.getItemId();
 
         //noinspection SimplifiableIfStatement
-        if (id == R.id.action_refresh) {
+    /*    if (id == R.id.action_refresh) {
             updateWeather();
 
+            return true;
+        }
+*/
+        if (id == R.id.action_map) {
+            openPreferredLocationInMap();
             return true;
         }
 
@@ -323,6 +330,26 @@ public class ForecastFragment extends Fragment implements LoaderManager.LoaderCa
         mUseTodayLayout = useTodayLayout;
         if (mForecastAdapter != null) {
             mForecastAdapter.setUseTodayLayout(mUseTodayLayout);
+        }
+    }
+
+    public void openPreferredLocationInMap() {
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
+
+        String location = preferences.getString(getString(R.string.pref_locaton_key),
+                getString(R.string.pref_location_default));
+
+        Uri geoLocation = Uri.parse("geo:0,0?").buildUpon()
+                .appendQueryParameter("q", location)
+                .build();
+
+        Intent intent = new Intent(Intent.ACTION_VIEW);
+        intent.setData(geoLocation);
+
+        if (intent.resolveActivity(getActivity().getPackageManager()) != null) {
+            startActivity(intent);
+        } else {
+            Log.d(LOG_TAG, "Couldn't call the thing.");
         }
     }
 
